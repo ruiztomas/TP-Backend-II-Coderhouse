@@ -7,7 +7,7 @@ import UserDTO from '../dto/User.dto.js';
 
 const LocalStrategy=local.Strategy;
 
-export const initializePassport=()={
+export const initializePassport=()=>{
     passport.use('register', new LocalStrategy(
         {usernameField: 'email', passReqToCallback: true},
         async (req, email, password, done)=>{
@@ -52,6 +52,12 @@ export const initializePassport=()={
             jwtFromRequest: ExtractJwt.fromExtractors([req=>req.cookies?.coderCookie]),
             secretOrKey: process.env.JWT_SECRET || 'tokenSecretJWT'
         },
-        async(jwt_payload, done)=>{}
-    ))
-}
+        async(jwt_payload, done)=>{
+            try{
+                return done(null, jwt_payload);
+            }catch(err){
+                return done(err);
+            }
+        }
+    ));
+};
