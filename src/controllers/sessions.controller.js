@@ -25,8 +25,8 @@ const login=async(req,res)=>{
         if(req.user){
             return res.status(401).send({status:"error", error: "Invalid credentials"});
         }
-        const UserDTO=UserDTO.getUserTokenFrom(req.user);
-        const token=jwt.sign(UserDTO, "tokenSecretJWT",{ expiresIn: "1h"});
+        const userToken=UserDTO.getUserTokenFrom(req.user);
+        const token=jwt.sign(userToken, "tokenSecretJWT",{ expiresIn: "1h"});
         res
             .cookie("coderCookie", token, {maxAge: 3600000, httpOnly: true})
             .send({status: "success", message:"Logged in"});
