@@ -5,14 +5,14 @@ import UserDTO from "../dto/User.dto.js";
 
 const register=async(req,res)=>{
     try{
-        const{first_name, last_name, email, password}=req.body;
+        const{first_name, last_name, email, password, role}=req.body;
         if(!first_name || !last_name || !email || !password)
             return res.status(400).send({status: "error", error:"Incomplete values"});
         const exists=await usersService.getUserByEmail(email);
         if(exists)
             return res.status(400).send({status:"error", error:"User already exists"});
         const hashedPassword=await createHash(password);
-        const user={first_name, last_name, email, password: hashedPassword};
+        const user={first_name, last_name, email, password: hashedPassword, role:role || "user"};
         let result=await usersService.create(user);
         res.send({status:"success", payload:result._id});
     }catch(error){
@@ -22,11 +22,11 @@ const register=async(req,res)=>{
 
 const login=async(req,res)=>{
     try{
-        if(req.user){
+        if(!req.user){
             return res.status(401).send({status:"error", error: "Invalid credentials"});
         }
         const userToken=UserDTO.getUserTokenFrom(req.user);
-        const token=jwt.sign(userToken, "tokenSecretJWT",{ expiresIn: "1h"});
+        const token=jwt.sign(userToken, process.env.JKWT_SECRET ||  "tokenSecretJWT",{ expiresIn: "1h"});
         res
             .cookie("coderCookie", token, {maxAge: 3600000, httpOnly: true})
             .send({status: "success", message:"Logged in"});

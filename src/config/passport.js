@@ -12,8 +12,10 @@ export const initializePassport=()=>{
         {usernameField: 'email', passReqToCallback: true},
         async (req, email, password, done)=>{
             try{
-                const{first_name, last_name}=req.body;
-                if(!first_name || !last_name)return done(null, false, {message: 'Incomplete values'});
+                const{first_name, last_name, role}=req.body;
+                if(!first_name || !last_name || !email || !password){
+                    return done(null, false, {message: 'Incomplete values'});
+                }
                 const exists=await usersService.getUserByEmail(email);
                 if(exists)return done(null, false, {message: 'User already exists'});
 
@@ -22,7 +24,8 @@ export const initializePassport=()=>{
                     first_name,
                     last_name,
                     email,
-                    password: hashedPassword
+                    password: hashedPassword,
+                    role: role || "user"
                 };
                 const result=await usersService.create(user);
                 return done(null, result);
