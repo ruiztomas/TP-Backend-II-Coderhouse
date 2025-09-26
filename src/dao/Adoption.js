@@ -4,11 +4,11 @@ export default class Adoption {
     constructor(){}
 
     get = async() =>{
-        return await adoptionModel.find().populate("user").populate("pet");
+        return await adoptionModel.find().populate("owner").populate("pet");
     }
 
     getBy = async(params) =>{
-        return await adoptionModel.findOne(params).populate("user").populate("pet");
+        return await adoptionModel.findOne(params).populate("owner").populate("pet");
     }
 
     create = async(adoption) =>{
