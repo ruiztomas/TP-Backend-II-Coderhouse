@@ -1,24 +1,25 @@
 import petModel from "./models/Pet.js";
 
 export default class Pet {
+    constructor(){}
 
-    get = (params) =>{
-        return petModel.find(params)
+    get = async() =>{
+        return await petModel.find()
     }
 
-    getBy = (params) =>{
-        return petModel.findOne(params);
+    getBy = async(params) =>{
+        return await petModel.findOne(params);
     }
 
-    save = (doc) =>{
-        return petModel.create(doc);
+    create = async(pet) =>{
+        return await petModel.create(pet);
     }
 
-    update = (id,doc) =>{
-        return petModel.findByIdAndUpdate(id,{$set:doc},{new:true});
+    update = async(id,pet) =>{
+        return await petModel.findByIdAndUpdate(id,{$set:pet},{new:true});
     }
 
-    delete = (id) =>{
-        return petModel.findByIdAndDelete(id);
+    delete = async(id) =>{
+        return await petModel.findByIdAndDelete(id);
     }
 }

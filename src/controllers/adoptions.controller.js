@@ -1,33 +1,62 @@
 import { adoptionsService, petsService, usersService } from "../services/index.js"
 
+const adoptionDTO=(adoption)=>({
+    id: adoption._id,
+    pet: adoption.pet,
+    user:adoption.user,
+    date:adoption.date
+});
+
 const getAllAdoptions = async(req,res)=>{
-    const result = await adoptionsService.getAll();
-    res.send({status:"success",payload:result})
-}
+    try{ 
+        const adoptions = await adoptionsService.getAll();
+        res.send({status:"success",payload:adoptions});
+    }catch(error){
+        res.status(500).send({status:"error", error: error.message});
+    }
+};
 
 const getAdoption = async(req,res)=>{
-    const adoptionId = req.params.aid;
-    const adoption = await adoptionsService.getBy({_id:adoptionId})
-    if(!adoption) return res.status(404).send({status:"error",error:"Adoption not found"})
-    res.send({status:"success",payload:adoption})
-}
+    try{ 
+        const adoptionId = req.params.aid;
+        const adoption = await adoptionsService.getBy(adoptionId);
+        if(!adoption){
+            return res.status(404).send({status:"error",error:"Adoption not found"})
+        }
+        res.send({status:"success",payload:adoption});
+    }catch(error){
+        res.status(500).send({status:"error", error: error.message});
+    }
+};
 
 const createAdoption = async(req,res)=>{
-    const {uid,pid} = req.params;
-    const user = await usersService.getUserById(uid);
-    if(!user) return res.status(404).send({status:"error", error:"user Not found"});
-    const pet = await petsService.getBy({_id:pid});
-    if(!pet) return res.status(404).send({status:"error",error:"Pet not found"});
-    if(pet.adopted) return res.status(400).send({status:"error",error:"Pet is already adopted"});
-    user.pets.push(pet._id);
-    await usersService.update(user._id,{pets:user.pets})
-    await petsService.update(pet._id,{adopted:true,owner:user._id})
-    await adoptionsService.create({owner:user._id,pet:pet._id})
-    res.send({status:"success",message:"Pet adopted"})
-}
+    try{ 
+        const {uid,pid} = req.params;
+        const user = await usersService.getUserById(uid);
+        if(!user){
+            return res.status(404).send({status:"error", error:"user Not found"});
+        }
+        const pet = await petsService.getBy(pid);
+        if(!pet){
+            return res.status(404).send({status:"error",error:"Pet not found"});
+        }
+        if(pet.adopted){
+            return res.status(400).send({status:"error",error:"Pet is already adopted"});
+        }
+        await petsService.update(pid,{adopted:true,owner:uid});
+        const adoption=await adoptionsService.create({
+            owner: uid,
+            pet: pid,
+            date: new Date()
+        });
+        res.send({status:"success",message:"Pet adopted"})
+    }catch(error){
+        res.status(500).send({status:"error", error: error.message});
+    }
+};
 
 export default {
     createAdoption,
     getAllAdoptions,
     getAdoption
-}
+};
