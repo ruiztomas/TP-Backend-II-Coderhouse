@@ -35,8 +35,16 @@ const schema = new mongoose.Schema({
             }
         ],
         default:[]
+    },
+    resetPasswordToken:{
+        type: String,
+        default: null
+    },
+    resetPasswordExpires:{
+        type: Date,
+        default: null
     }
-})
+});
 
 const userModel = mongoose.model(collection,schema);
 

@@ -19,6 +19,8 @@ router.get(
     passport.authenticate('jwt', {session: false}),
     sessionsController.current
 );
+router.post('/forgot-password',sessionsController.forgotPassword);
+router.post('/reset-password', sessionsController.resetPassword);
 router.get('/unprotectedLogin',sessionsController.unprotectedLogin);
 router.get('/unprotectedCurrent',sessionsController.unprotectedCurrent);
 
