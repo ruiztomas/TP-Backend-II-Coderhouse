@@ -25,10 +25,6 @@ connection();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
-app.use((err, req, res, next) => {
-    console.error(err);
-    res.status(500).send({status:"error", error: err.message});
-});
 
 initializePassport();
 app.use(passport.initialize());
@@ -37,5 +33,10 @@ app.use('/api/users',usersRouter);
 app.use('/api/pets',petsRouter);
 app.use('/api/adoptions',adoptionsRouter);
 app.use('/api/sessions',sessionsRouter);
+
+app.use((err, req, res, next)=>{
+    console.error(err);
+    res.status(500).send({status:"error", error: err.message});
+});
 
 app.listen(PORT,()=>console.log(`Listening on ${PORT}`))
