@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import passport, { authenticate } from 'passport';
+import passport from 'passport';
 import {authotization} from '../middlewares/authorization.js';
 import petsController from '../controllers/pets.controller.js';
 import uploader from '../utils/uploader.js';
@@ -16,6 +16,7 @@ router.post(
 router.post(
     '/withimage',
     passport.authenticate('jwt',{session:false}),
+    authotization(['admin']),
     uploader.single('image'),
     petsController.createPetWithImage
 );

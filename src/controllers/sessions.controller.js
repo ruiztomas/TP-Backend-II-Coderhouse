@@ -2,7 +2,7 @@ import {usersService}from "../services/index.js";
 import {createHash, passwordValidation} from "../utils/index.js";
 import jwt from "jsonwebtoken";
 import UserDTO from "../dto/User.dto.js";
-import transporter from "../config/mailer.js";
+import transporter from "../utils/mailer.js";
 import {generateResetToken, verifyResetToken} from "../utils/tokenReset.js";
 
 const register=async(req,res)=>{
@@ -28,7 +28,7 @@ const login=async(req,res)=>{
             return res.status(401).send({status:"error", error: "Invalid credentials"});
         }
         const userToken=UserDTO.getUserTokenFrom(req.user);
-        const token=jwt.sign(userToken, process.env.JKWT_SECRET ||  "tokenSecretJWT",{ expiresIn: "1h"});
+        const token=jwt.sign(userToken, process.env.JWT_SECRET ||  "tokenSecretJWT",{ expiresIn: "1h"});
         res
             .cookie("coderCookie", token, {maxAge: 3600000, httpOnly: true})
             .send({status: "success", message:"Logged in"});
@@ -42,8 +42,8 @@ const current=async(req,res)=>{
     try{
         if(!req.user)
             return res.status(401).send({status: "error", error: "Not authenticated"});
-            const dto=UserDTO.getUserTokenFrom(req.user);
-            res.send({status: "success", payload: req.user});
+        const dto=UserDTO.getUserTokenFrom(req.user);
+        res.send({status: "success", payload: dto});
     }catch(error){
         console.error("Error en current:", error);
         res.status(500).send({status: "error", error: "Failed to get current user"});
@@ -62,8 +62,8 @@ const forgotPassword=async(req, res)=>{
         const expiresAt=Date.now()+(parseInt(process.env.RESET_TOKEN_EXPIRES || "3600")*1000);
         await usersService.update(user._id, {resetPasswordToken: token, resetPasswordExpires: new Date(expiresAt)});
         const resetLink=`${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
-        const mailOptions={
-            from: process.env.MAIL_USER,
+        await transporter.sendMail({
+            from: `"Petshop" <${process.env.MAIL_USER}>`,
             to: user.email,
             subject:"Reset your password",
             html:`
@@ -78,8 +78,7 @@ const forgotPassword=async(req, res)=>{
                     ">Restablecer contraseña</a></p>
                 <p>Si no solicitaste esto, ignora este correo.</p>
             `
-        };
-        await transporter.sendMail(mailOptions);
+        });
         return res.send({status:"success", message:"If the email exists, a reset link was sent"});
     }catch(error){
         console.error("forgotPassword error:", error);
@@ -121,7 +120,7 @@ const unprotectedLogin=async(req, res)=>{
     if(!isValidPassword)
         return res.status(404).send({status: "error", error:"Incorrect password"});
 
-    const token=jwt.sign(user,process.env.JWT_SECRET || "tokenSecretJWT",{expiresIn:"1h"});
+    const token=jwt.sign(UserDTO.getUserTokenFrom(user),process.env.JWT_SECRET || "tokenSecretJWT",{expiresIn:"1h"});
 
     res
         .cookie("unprotectedCookie", token, {maxAge: 3600000})

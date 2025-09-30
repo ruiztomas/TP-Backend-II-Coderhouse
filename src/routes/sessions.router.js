@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import passport from 'passport';
+import {authorization} from "../middlewares/authorization.js"
 import sessionsController from '../controllers/sessions.controller.js';
 
 const router = Router();
 
 router.post(
     '/register',
-    passport.authenticate('register',{session: false}),
+    passport.authenticate('register',{session:false}),
     sessionsController.register
 );
 router.post(
@@ -21,7 +22,8 @@ router.get(
 );
 router.post('/forgot-password',sessionsController.forgotPassword);
 router.post('/reset-password', sessionsController.resetPassword);
-router.get('/unprotectedLogin',sessionsController.unprotectedLogin);
-router.get('/unprotectedCurrent',sessionsController.unprotectedCurrent);
+
+router.post('/unprotected-login',sessionsController.unprotectedLogin);
+router.get('/unprotected-current',sessionsController.unprotectedCurrent);
 
 export default router;
