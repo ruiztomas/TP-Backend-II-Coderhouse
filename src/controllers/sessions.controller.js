@@ -10,6 +10,7 @@ const register=async(req,res)=>{
         const{first_name, last_name, email, password, role}=req.body;
         if(!first_name || !last_name || !email || !password)
             return res.status(400).send({status: "error", error:"Incomplete values"});
+        email=email.trim().toLowerCase(); 
         const exists=await usersService.getUserByEmail(email);
         if(exists)
             return res.status(400).send({status:"error", error:"User already exists"});

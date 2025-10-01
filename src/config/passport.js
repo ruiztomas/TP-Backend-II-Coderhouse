@@ -7,6 +7,33 @@ import { createHash, passwordValidation } from '../utils/index.js';
 const LocalStrategy=local.Strategy;
 
 export const initializePassport=()=>{
+    passport.use('register', new LocalStrategy(
+        {usernameField: 'email', passReqToCallback: true},
+        async (req, email, password, done)=>{
+            try{
+                const{first_name, last_name, role}=req.body;
+                if(!first_name || !last_name || !email || !password){
+                    return done(null, false,{message: "Incomplete values"});
+                }
+                const userExists=await usersService.getUserByEmail(email);
+                if(userExists){
+                    return done(null, false, {message:'User already exists'});
+                }
+                const hashedPassword=await createHash(password);
+                const newUser={
+                    first_name,
+                    last_name,
+                    email,
+                    password: hashedPassword,
+                    role: role || 'user'
+                };
+                const result=await usersService.create(newUser);
+                return done(null, result);
+            }catch(err){
+                return done('Error registering user:'+err);
+            }
+        }
+    ));
     passport.use('login', new LocalStrategy(
         {usernameField: 'email'},
         async(email, password, done)=>{
