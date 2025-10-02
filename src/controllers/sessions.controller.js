@@ -7,7 +7,7 @@ import {generateResetToken, verifyResetToken} from "../utils/tokenReset.js";
 
 const register=async(req,res)=>{
     try{
-        const{first_name, last_name, email, password, role}=req.body;
+        let{first_name, last_name, email, password, role}=req.body;
         if(!first_name || !last_name || !email || !password)
             return res.status(400).send({status: "error", error:"Incomplete values"});
         email=email.trim().toLowerCase(); 
@@ -19,20 +19,31 @@ const register=async(req,res)=>{
         const result=await usersService.create(user);
         res.send({status:"success", payload:result._id});
     }catch(error){
+        console.error(error);
         res.status(500).send({status:"error", error:error.message});
     }
 };
 
 const login=async(req,res)=>{
     try{
-        if(!req.user){
-            return res.status(401).send({status:"error", error: "Invalid credentials"});
+        const{email, password}=req.body;
+        if(!email || !password){
+            return res.status(400).send({status:"error", error: "Incomplete values"});
         }
-        const userToken=UserDTO.getUserTokenFrom(req.user);
-        const token=jwt.sign(userToken, process.env.JWT_SECRET ||  "tokenSecretJWT",{ expiresIn: "1h"});
+        const user=await usersService.getUserByEmail(email);
+        if(!user)return res.status(404).send({status:"error", error:"User doesn't exist"});
+        const isValidPassword=await passwordValidation(user, password);
+        if(!isValidPassword){
+            return res.status(401).send({status:"error", error:"Incorrect password"});
+        }
+        const token=jwt.sign(
+            UserDTO.getUserTokenFrom(user),
+            process.env.JWT_SECRET || "tokenSecretJWT",
+            {expiresIn: "1h"}
+        );
         res
-            .cookie("coderCookie", token, {maxAge: 3600000, httpOnly: true})
-            .send({status: "success", message:"Logged in"});
+            .cookie("coderCookie", token, {httpOnly: true, maxAge: 3600000})
+            .send({status:"success", message: "Logged in", token});
     }catch(error){
         console.error("Error en login:", error);
         res.status(500).send({status:"error", error: "Login gailed"});
@@ -41,13 +52,13 @@ const login=async(req,res)=>{
 
 const current=async(req,res)=>{
     try{
-        if(!req.user)
-            return res.status(401).send({status: "error", error: "Not authenticated"});
-        const dto=UserDTO.getUserTokenFrom(req.user);
-        res.send({status: "success", payload: dto});
+        const token=req.cookies["coderCookie"];
+        if(!token)return res.status(401).send({status: "error", error: "No cookie"});
+        const user=jwt.verify(token, process.env.JWT_SECRET || "tokenSecretJWT");
+        res.send({status: "success", payload: user});
     }catch(error){
         console.error("Error en current:", error);
-        res.status(500).send({status: "error", error: "Failed to get current user"});
+        res.status(500).send({status: "error", error: "Invalid or expired token"});
     }
 };
 

@@ -1,27 +1,32 @@
 import nodemailer from 'nodemailer';
-const testAccount=await nodemailer.createTestAccount();
+import dotenv from "dotenv";
+dotenv.config();
+
 const transporter=nodemailer.createTransport({
-    host: testAccount.smtp.host,
-    port: testAccount.smtp.port,
-    secure: testAccount.smtp.secure,
+    host: process.env.MAIL_HOST,
+    port: Number(process.env.MAIL_PORT),
     auth:{
-        user: testAccount.user,
-        pass: testAccount.pass
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS
     }
 });
 transporter.verify()
     .then(()=>{console.log('Mailer configured');})
     .catch(err=>console.warn('Mailer not verified:', err.message));
 
-export default transporter;
-
-export const sendTestMail=async()=>{
-    const info=await transporter.sendMail({
-        from: '"Test" <test@example.com>',
-        to: 'someone@example.com',
-        subject: 'Prueba de Nodemailer',
-        text: 'Este es un mail de prueba',
-        html: '<b>Este es un mail de prueba</b>'
+export const sendTestMail = async () => {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.MAIL_FROM,
+      to: 'destinatario@example.com',
+      subject: 'Prueba de correo Mailtrap',
+      text: 'Este es un correo de prueba enviado desde Mailtrap.',
+      html: '<b>Este es un correo de prueba enviado desde Mailtrap</b>'
     });
     console.log('Preview URL:', nodemailer.getTestMessageUrl(info));
+  } catch (err) {
+    console.error('Error enviando correo de prueba:', err.message);
+  }
 };
+
+export default transporter;
